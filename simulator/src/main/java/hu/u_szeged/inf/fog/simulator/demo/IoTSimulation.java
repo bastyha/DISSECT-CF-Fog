@@ -1,5 +1,6 @@
 package hu.u_szeged.inf.fog.simulator.demo;
 
+import com.google.gson.Gson;
 import hu.mta.sztaki.lpds.cloud.simulator.Timed;
 import hu.mta.sztaki.lpds.cloud.simulator.energy.powermodelling.PowerState;
 import hu.mta.sztaki.lpds.cloud.simulator.iaas.PhysicalMachine;
@@ -9,6 +10,7 @@ import hu.mta.sztaki.lpds.cloud.simulator.io.VirtualAppliance;
 import hu.mta.sztaki.lpds.cloud.simulator.util.PowerTransitionGenerator;
 import hu.mta.sztaki.lpds.cloud.simulator.util.SeedSyncer;
 import hu.u_szeged.inf.fog.simulator.application.Application;
+import hu.u_szeged.inf.fog.simulator.application.strategy.PliantApplicationStrategy;
 import hu.u_szeged.inf.fog.simulator.application.strategy.RuntimeAwareApplicationStrategy;
 import hu.u_szeged.inf.fog.simulator.iot.Device;
 import hu.u_szeged.inf.fog.simulator.iot.EdgeDevice;
@@ -26,9 +28,20 @@ import java.util.*;
 public class IoTSimulation {
 
     public static void main(String[] args) throws Exception {
-        SimLogger.setLogging(1, true);
+        SimLogger.setLogging(3, false);
 
+        for (int i = 0; i < args.length; i++) {
+            System.out.println(args[i]);
+        }
         String cloudfile = ScenarioBase.resourcePath + "LPDS_original.xml";
+        double priceParam = 4.0;
+        try {
+            cloudfile = args[0];
+            priceParam = Double.parseDouble(args[1]);
+
+        }catch (IndexOutOfBoundsException e){
+            System.err.println("No input param, using default instead");
+        }
 
         VirtualAppliance va = new VirtualAppliance("va", 100, 0, false, 1_073_741_824L);
         AlterableResourceConstraints arc = new AlterableResourceConstraints(2, 0.001, 4294967296L);
@@ -47,11 +60,11 @@ public class IoTSimulation {
         fog1.addNeighbor(fog2, 33);
 
         Application application1 = new Application("App-1", 1 * 60 * 1000, 250, 2500, false,
-                new RuntimeAwareApplicationStrategy(0.9, 2.0), instance3);
+                new PliantApplicationStrategy(0.9, 2.0, priceParam), instance3);
         Application application2 = new Application("App-2", 1 * 60 * 1000, 250, 2500, true,
-                new RuntimeAwareApplicationStrategy(0.9, 2.0), instance2);
+                new PliantApplicationStrategy(0.9, 2.0, priceParam), instance2);
         Application application3 = new Application("App-3", 1 * 60 * 1000, 250, 2500, true,
-                new RuntimeAwareApplicationStrategy(0.9, 2.0), instance1);
+                new PliantApplicationStrategy(0.9, 2.0, priceParam), instance1);
 
         cloud1.addApplication(application1);
         fog1.addApplication(application2);
@@ -89,8 +102,10 @@ public class IoTSimulation {
         long stoptime = System.nanoTime();
 
         ScenarioBase.calculateIoTCost();
-        ScenarioBase.logBatchProcessing(stoptime - starttime);
-        TimelineVisualiser.generateTimeline(ScenarioBase.resultDirectory);
-        MapVisualiser.mapGenerator(ScenarioBase.scriptPath, ScenarioBase.resultDirectory, deviceList);
+        var res = ScenarioBase.logBatchProcessing(stoptime - starttime);
+        System.out.println(new Gson().toJson(res));
+
+//        TimelineVisualiser.generateTimeline(ScenarioBase.resultDirectory);
+//        MapVisualiser.mapGenerator(ScenarioBase.scriptPath, ScenarioBase.resultDirectory, deviceList);
     }
 }

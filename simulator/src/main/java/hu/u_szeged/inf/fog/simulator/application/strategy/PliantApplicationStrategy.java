@@ -21,6 +21,7 @@ import java.util.Vector;
  * This class represents an application strategy based on Fuzzy logic and Pliant system.
  */
 public class PliantApplicationStrategy extends ApplicationStrategy {
+    double priceParam = 4.0;
 
     /**
      * Constructs a new strategy with the specified activation ratio and transfer divider.
@@ -31,6 +32,11 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
     public PliantApplicationStrategy(double activationRatio, double transferDivider) {
         this.activationRatio = activationRatio;
         this.transferDivider = transferDivider;
+    }
+
+    public PliantApplicationStrategy(double activationRatio, double transferDivider, double priceParam) {
+        this(activationRatio, transferDivider);
+        this.priceParam = priceParam;
     }
 
     /**
@@ -73,7 +79,7 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
                 }
             }
         }
-
+/*min max kereses START*/
         double minLoadOfResource = currentCa.getLoadOfResource();
         double maxLoadOfResource = currentCa.getLoadOfResource();
         int deviceMin = currentCa.applications.get(0).deviceList.size();
@@ -134,7 +140,8 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
                 maxUnprocessedData = unprocesseddata;
             }
         }
-
+/*min max keresés END*/
+/*szomszedok scoreja egyesevel START*/
         Vector<Double> loadOfResource = new Vector<Double>();
         Vector<Double> price = new Vector<Double>();
         Vector<Double> unprocesseddata = new Vector<Double>();
@@ -152,7 +159,7 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
              * " UnprocessedData: " + (ca.applications.get(0).receivedData -
              * ca.applications.get(0).receivedData) / ca.applications.get(0).tasksize);
              */
-            sig = new Sigmoid(Double.valueOf(4.0 / 1.0), Double.valueOf((minPrice)));
+            sig = new Sigmoid(priceParam, Double.valueOf((minPrice)));
             price.add(sig.getAt(ca.applications.get(0).instance.pricePerTick * 100000000));
 
             // System.out.println(ca.applications.get(0).instance.pricePerTick * 100000000);
@@ -208,15 +215,17 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
             }
             score.add((int) (FuzzyIndicators.getAggregation(temp) * 100));
         }
+/*szomszedok scoreja egyesevel END*/
         // System.out.println("Pontozás: " + score);
 
+/*current App scoreja START*/
         Vector<Double> temp = new Vector<Double>();
 
         Sigmoid sig = new Sigmoid(Double.valueOf(-1.0 / 8.0),
                 Double.valueOf((maxLoadOfResource + minLoadOfResource) / 2.0));
         temp.add(sig.getAt(currentCa.getLoadOfResource()));
 
-        sig = new Sigmoid(Double.valueOf(4.0 / 1.0), Double.valueOf((minPrice)));
+        sig = new Sigmoid(priceParam, Double.valueOf((minPrice)));
         temp.add(sig.getAt(currentCa.applications.get(0).instance.pricePerTick * 100000000));
 
         sig = new Sigmoid(Double.valueOf(-1.0 / 8.0), Double.valueOf((Math.abs((maxLatency - minLatency)) / 2.0)));
@@ -227,6 +236,7 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
                         / currentCa.applications.get(0).tasksize)));
         Integer currentCaScore;
         currentCaScore = (int) (FuzzyIndicators.getAggregation(temp) * 100);
+/*current App scoreja END*/
         /*
          * System.out.println(currentCA.name + " Load Resource " +
          * currentCA.getLoadOfResource() + " Price: " +
@@ -236,6 +246,7 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
          * currentCA.applications.get(0).tasksize); System.out.println("Score " +
          * currentCAscore);
          */
+/*dontes hogy mi legyen a kovetkezo App*/
         Vector<Integer> finaldecision = new Vector<Integer>();
         for (int i = 0; i < availableCompAppliances.size(); ++i) {
             finaldecision.add(i);
