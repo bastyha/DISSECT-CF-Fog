@@ -13,8 +13,8 @@ public class Sigmoid implements Normalizer {
     }
 
     public Sigmoid(Double lambda, Double shift) {
-        this.shift = shift;
         this.lambda = lambda;
+        this.shift = shift;
     }
 
     public Vector<Double> normalizeIncrement(Vector<Double> sourceVector) {

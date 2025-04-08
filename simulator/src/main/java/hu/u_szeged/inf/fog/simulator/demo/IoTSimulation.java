@@ -28,17 +28,23 @@ import java.util.*;
 public class IoTSimulation {
 
     public static void main(String[] args) throws Exception {
-        SimLogger.setLogging(3, false);
+        SimLogger.setLogging(1, false);
 
-        for (int i = 0; i < args.length; i++) {
-            System.out.println(args[i]);
-        }
         String cloudfile = ScenarioBase.resourcePath + "LPDS_original.xml";
-        double priceParam = 4.0;
+        Vector<Double> sigmoidParams = new Vector<>();
         try {
             cloudfile = args[0];
-            priceParam = Double.parseDouble(args[1]);
+            System.out.println("******");
+            System.out.println(args[1]);
+            System.out.println("******");
+            for (int i = 1; i < args.length; i++) {
+                try{
 
+                    sigmoidParams.add(Double.parseDouble(args[i]));
+                }catch (NumberFormatException e){
+                    sigmoidParams.add(null);
+                }
+            }
         }catch (IndexOutOfBoundsException e){
             System.err.println("No input param, using default instead");
         }
@@ -60,11 +66,11 @@ public class IoTSimulation {
         fog1.addNeighbor(fog2, 33);
 
         Application application1 = new Application("App-1", 1 * 60 * 1000, 250, 2500, false,
-                new PliantApplicationStrategy(0.9, 2.0, priceParam), instance3);
+                new PliantApplicationStrategy(0.9, 2.0, sigmoidParams), instance3);
         Application application2 = new Application("App-2", 1 * 60 * 1000, 250, 2500, true,
-                new PliantApplicationStrategy(0.9, 2.0, priceParam), instance2);
+                new PliantApplicationStrategy(0.9, 2.0, sigmoidParams), instance2);
         Application application3 = new Application("App-3", 1 * 60 * 1000, 250, 2500, true,
-                new PliantApplicationStrategy(0.9, 2.0, priceParam), instance1);
+                new PliantApplicationStrategy(0.9, 2.0, sigmoidParams), instance1);
 
         cloud1.addApplication(application1);
         fog1.addApplication(application2);
