@@ -11,7 +11,6 @@ import hu.mta.sztaki.lpds.cloud.simulator.util.PowerTransitionGenerator;
 import hu.mta.sztaki.lpds.cloud.simulator.util.SeedSyncer;
 import hu.u_szeged.inf.fog.simulator.application.Application;
 import hu.u_szeged.inf.fog.simulator.application.strategy.PliantApplicationStrategy;
-import hu.u_szeged.inf.fog.simulator.application.strategy.RuntimeAwareApplicationStrategy;
 import hu.u_szeged.inf.fog.simulator.iot.Device;
 import hu.u_szeged.inf.fog.simulator.iot.EdgeDevice;
 import hu.u_szeged.inf.fog.simulator.iot.SmartDevice;
@@ -19,32 +18,25 @@ import hu.u_szeged.inf.fog.simulator.iot.mobility.GeoLocation;
 import hu.u_szeged.inf.fog.simulator.iot.mobility.RandomWalkMobilityStrategy;
 import hu.u_szeged.inf.fog.simulator.iot.strategy.RandomDeviceStrategy;
 import hu.u_szeged.inf.fog.simulator.node.ComputingAppliance;
+import hu.u_szeged.inf.fog.simulator.pliant.SigmoidParams;
 import hu.u_szeged.inf.fog.simulator.provider.Instance;
-import hu.u_szeged.inf.fog.simulator.util.MapVisualiser;
 import hu.u_szeged.inf.fog.simulator.util.SimLogger;
-import hu.u_szeged.inf.fog.simulator.util.TimelineVisualiser;
+
 import java.util.*;
 
 public class IoTSimulation {
 
+
     public static void main(String[] args) throws Exception {
         SimLogger.setLogging(1, false);
-
+        Gson gson = new Gson();
         String cloudfile = ScenarioBase.resourcePath + "LPDS_original.xml";
-        Vector<Double> sigmoidParams = new Vector<>();
+        SigmoidParams sigmoidParams =  null ;
+        Vector<Object> configs = new Vector<>();
         try {
-            cloudfile = args[0];
-            System.out.println("******");
-            System.out.println(args[1]);
-            System.out.println("******");
-            for (int i = 1; i < args.length; i++) {
-                try{
-
-                    sigmoidParams.add(Double.parseDouble(args[i]));
-                }catch (NumberFormatException e){
-                    sigmoidParams.add(null);
-                }
-            }
+            configs = gson.fromJson(args[0], configs.getClass());
+            cloudfile = configs.get(0).toString();
+            sigmoidParams = gson.fromJson(args[1], SigmoidParams.class);
         }catch (IndexOutOfBoundsException e){
             System.err.println("No input param, using default instead");
         }
