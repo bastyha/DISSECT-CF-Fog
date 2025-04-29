@@ -48,7 +48,9 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
             SigmoidParams sigmoidParams
             ) {
         this(activationRatio, transferDivider);
-        this.sigmoidParams = sigmoidParams;
+        if (sigmoidParams!= null){
+            this.sigmoidParams = sigmoidParams;
+        }
     }
 
     /**
@@ -152,6 +154,10 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
                 maxUnprocessedData = unprocesseddata;
             }
         }
+
+//        System.out.printf( "price: %f , %f\n",minPrice, maxPrice);
+//        System.out.printf( "UnprocessedData: %f , %f\n",minUnprocessedData, maxUnprocessedData);
+//        System.out.printf( "LoadOfResource: %f , %f\n",minLoadOfResource, maxLoadOfResource);
 /*min max keresés END*/
 /*szomszedok scoreja egyesevel START*/
         Vector<Double> loadOfResource = new Vector<Double>();
@@ -163,10 +169,9 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
 
             ComputingAppliance ca = availableCompAppliances.get(i);
 
-            if(sigmoidParams.loadOfResourceShift == null){
-                sigmoidParams.loadOfResourceShift = Double.valueOf((maxLoadOfResource + minLoadOfResource) / 2.0);
-            }
-            Sigmoid sig = new Sigmoid(sigmoidParams.loadOfResourceLambda, sigmoidParams.loadOfResourceShift);
+            Double tempLoadOfResourceShift = sigmoidParams.loadOfResourceShift != null? sigmoidParams.loadOfResourceShift : Double.valueOf((maxLoadOfResource + minLoadOfResource) / 2.0);
+            System.out.println("loadOfResourceShift: " + tempLoadOfResourceShift);
+            Sigmoid sig = new Sigmoid(sigmoidParams.loadOfResourceLambda, tempLoadOfResourceShift);
             loadOfResource.add(sig.getAt(ca.getLoadOfResource()));
             /*
              * System.out.println(ca.name + " Load Resource " + ca.getLoadOfResource() +
@@ -174,20 +179,18 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
              * " UnprocessedData: " + (ca.applications.get(0).receivedData -
              * ca.applications.get(0).receivedData) / ca.applications.get(0).tasksize);
              */
-            if (sigmoidParams.priceShift == null){
-                sigmoidParams.priceShift = minPrice;
-            }
-            sig = new Sigmoid(sigmoidParams.priceLambda, sigmoidParams.priceShift);
+            Double tempPriceShift = sigmoidParams.priceShift != null? sigmoidParams.priceShift : minPrice;
+            System.out.println("priceShift: "+ tempPriceShift);
+            sig = new Sigmoid(sigmoidParams.priceLambda, tempPriceShift);
             price.add(sig.getAt(ca.applications.get(0).instance.pricePerTick * 100000000));
 
             // System.out.println(ca.applications.get(0).instance.pricePerTick * 100000000);
 
             sig = new Sigmoid(Double.valueOf(-1.0 / 8.0), Double.valueOf((Math.abs((maxLatency - minLatency)) / 2.0)));
 
-            if ( sigmoidParams.unprocessedDataShift == null){
-                sigmoidParams.unprocessedDataShift = Double.valueOf((maxUnprocessedData - minUnprocessedData));
-            }
-            sig = new Sigmoid(sigmoidParams.unprocessedDataLambda, sigmoidParams.unprocessedDataShift);
+            Double tempUnprocessedDataShift= sigmoidParams.unprocessedDataShift != null ? sigmoidParams.unprocessedDataShift : Double.valueOf((maxUnprocessedData - minUnprocessedData));
+            System.out.println("unprocessedDataShift: "+ tempUnprocessedDataShift);
+            sig = new Sigmoid(sigmoidParams.unprocessedDataLambda, tempUnprocessedDataShift);
             unprocesseddata.add(
                     sig.getAt((double) ((ca.applications.get(0).receivedData - ca.applications.get(0).processedData)
                             / ca.applications.get(0).tasksize)));
@@ -242,25 +245,18 @@ public class PliantApplicationStrategy extends ApplicationStrategy {
 /*current App scoreja START*/
         Vector<Double> temp = new Vector<Double>();
 
-        if (sigmoidParams.loadOfResourceShift == null){
-            sigmoidParams.loadOfResourceShift = Double.valueOf((maxLoadOfResource + minLoadOfResource) / 2.0);
-
-        }
-        Sigmoid sig = new Sigmoid( sigmoidParams.loadOfResourceLambda ,sigmoidParams.loadOfResourceShift);
+        Double tempLoadOfResourceShift = sigmoidParams.loadOfResourceShift != null? sigmoidParams.loadOfResourceShift : Double.valueOf((maxLoadOfResource + minLoadOfResource) / 2.0);
+        Sigmoid sig = new Sigmoid( sigmoidParams.loadOfResourceLambda, tempLoadOfResourceShift);
         temp.add(sig.getAt(currentCa.getLoadOfResource()));
 
-        if(sigmoidParams.priceShift == null){
-            sigmoidParams.priceShift =  Double.valueOf(minPrice);
-        }
-        sig = new Sigmoid(sigmoidParams.priceLambda, sigmoidParams.priceShift);
+        Double tempPriceShift = sigmoidParams.priceShift != null? sigmoidParams.priceShift : minPrice;
+        sig = new Sigmoid(sigmoidParams.priceLambda, tempPriceShift);
         temp.add(sig.getAt(currentCa.applications.get(0).instance.pricePerTick * 100000000));
 
         sig = new Sigmoid(Double.valueOf(-1.0 / 8.0), Double.valueOf((Math.abs((maxLatency - minLatency)) / 2.0)));
 
-        if (sigmoidParams.unprocessedDataShift == null){
-            sigmoidParams.unprocessedDataShift = Double.valueOf((maxUnprocessedData - minUnprocessedData));
-        }
-        sig = new Sigmoid(sigmoidParams.unprocessedDataLambda, sigmoidParams.unprocessedDataShift);
+        Double tempUnpdocessedDataShift = sigmoidParams.unprocessedDataShift != null? sigmoidParams.unprocessedDataShift :  Double.valueOf((maxUnprocessedData - minUnprocessedData));
+        sig = new Sigmoid(sigmoidParams.unprocessedDataLambda, tempUnpdocessedDataShift);
         temp.add(sig.getAt(
                 (double) ((currentCa.applications.get(0).receivedData - currentCa.applications.get(0).processedData)
                         / currentCa.applications.get(0).tasksize)));

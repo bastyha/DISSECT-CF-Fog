@@ -10,7 +10,7 @@ import hu.mta.sztaki.lpds.cloud.simulator.io.VirtualAppliance;
 import hu.mta.sztaki.lpds.cloud.simulator.util.PowerTransitionGenerator;
 import hu.mta.sztaki.lpds.cloud.simulator.util.SeedSyncer;
 import hu.u_szeged.inf.fog.simulator.application.Application;
-import hu.u_szeged.inf.fog.simulator.application.strategy.PliantApplicationStrategy;
+import hu.u_szeged.inf.fog.simulator.application.strategy.*;
 import hu.u_szeged.inf.fog.simulator.iot.Device;
 import hu.u_szeged.inf.fog.simulator.iot.EdgeDevice;
 import hu.u_szeged.inf.fog.simulator.iot.SmartDevice;
@@ -40,6 +40,14 @@ public class IoTSimulation {
         }catch (IndexOutOfBoundsException e){
             System.err.println("No input param, using default instead");
         }
+        sigmoidParams = new SigmoidParams(
+                16.00000,
+                4.64344,
+                -1.00000,
+                88.97222,
+                -2.00000,
+                2671.39384
+        );
 
         VirtualAppliance va = new VirtualAppliance("va", 100, 0, false, 1_073_741_824L);
         AlterableResourceConstraints arc = new AlterableResourceConstraints(2, 0.001, 4294967296L);
@@ -58,18 +66,18 @@ public class IoTSimulation {
         fog1.addNeighbor(fog2, 33);
 
         Application application1 = new Application("App-1", 1 * 60 * 1000, 250, 2500, false,
-                new PliantApplicationStrategy(0.9, 2.0, sigmoidParams), instance3);
+                new PliantApplicationStrategy(0.9, 2.0 /*, sigmoidParams*/ ), instance3);
         Application application2 = new Application("App-2", 1 * 60 * 1000, 250, 2500, true,
-                new PliantApplicationStrategy(0.9, 2.0, sigmoidParams), instance2);
+                new PliantApplicationStrategy(0.9, 2.0 /*, sigmoidParams*/ ), instance2);
         Application application3 = new Application("App-3", 1 * 60 * 1000, 250, 2500, true,
-                new PliantApplicationStrategy(0.9, 2.0, sigmoidParams), instance1);
+                new PliantApplicationStrategy(0.9, 2.0 /*, sigmoidParams*/ ), instance1);
 
         cloud1.addApplication(application1);
         fog1.addApplication(application2);
         fog2.addApplication(application3);
 
         ArrayList<Device> deviceList = new ArrayList<Device>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 30; i++) {
             HashMap<String, Integer> latencyMap = new HashMap<String, Integer>();
             EnumMap<PowerTransitionGenerator.PowerStateKind, Map<String, PowerState>> transitions = 
                     PowerTransitionGenerator.generateTransitions(0.065, 1.475, 2.0, 1, 2);
@@ -84,11 +92,11 @@ public class IoTSimulation {
             Device device;
             double step = SeedSyncer.centralRnd.nextDouble(); 
             if(i % 2 == 0) {
-                device = new EdgeDevice(0, 10 * 60 * 60 * 1000, 100, 60 * 1000, 
+                device = new EdgeDevice(0, 10 * 60 * 60 * 1000  , 200, 60 * 1000 / 6 ,
                         new RandomWalkMobilityStrategy(new GeoLocation(47 + step, 19 - step), 0.0027, 0.0055, 10000),
                         new RandomDeviceStrategy(), localMachine, 0.1, 50, true);
             }else {
-                device  = new SmartDevice(0, 10 * 60 * 60 * 1000, 100, 60 * 1000, 
+                device  = new SmartDevice(0, 10 * 60 * 60 * 1000 * 20L, 600, 60 * 1000 ,
                         new RandomWalkMobilityStrategy(new GeoLocation(47 - step, 19 + - step), 0.0027, 0.0055, 10000),
                         new RandomDeviceStrategy(), localMachine, 50, true);
             }
@@ -101,6 +109,8 @@ public class IoTSimulation {
 
         ScenarioBase.calculateIoTCost();
         var res = ScenarioBase.logBatchProcessing(stoptime - starttime);
+
+
         System.out.println(new Gson().toJson(res));
 
 //        TimelineVisualiser.generateTimeline(ScenarioBase.resultDirectory);
